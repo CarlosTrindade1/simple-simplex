@@ -6,6 +6,7 @@
 #include <fstream>
 #include <vector>
 #include <sstream>
+#define EPSILON 0.00001
 
 using namespace std;
 
@@ -18,6 +19,15 @@ struct Problem {
     vector<double> base;
     vector<vector<double>> tableau;
 };
+
+void print_tableau(Problem *problem) {
+    for (int i = 0; i < problem->tableau.size(); i++) {
+        for (int j = 0; j < problem->tableau[i].size(); j++) {
+            printf("%.5f ", problem->tableau[i][j]);
+        }
+        cout << endl;
+    }
+}
 
 void read_numbers(string line, vector<double> *numbers) {
     istringstream iss(line);
@@ -91,7 +101,7 @@ void create_tableau(Problem *problem) {
 int pivoteia(Problem *problem, int row, int col) {
     double pivot = problem->tableau[row][col];
 
-    if (pivot == 0) {
+    if (pivot <= EPSILON && pivot >= -EPSILON) {
         return 1;
     }
 
@@ -114,9 +124,62 @@ int pivoteia(Problem *problem, int row, int col) {
     return 0;
 }
 
+bool checks_basis_viability(Problem *problem) {
+    for (int i = 0; i < problem->base.size(); i++) {
+        if(pivoteia(problem, i + 1, problem->base[i] - 1)) {
+            return false;
+        }
+    }
+
+    for (int i = 1; i < problem->tableau.size(); i++) {
+        if (problem->tableau[i].back() < -EPSILON) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void print_solution(Problem *problem) {
+    int row = 1;
+
+    printf("X ");
+
+    for (int i = 0; i < problem->n; i++) {
+        bool is_base = false;
+
+        for (int j = 0; j < problem->base.size(); j++) {
+            if (problem->base[j] - 1 == i) {
+                is_base = true;
+                break;
+            }
+        }
+
+        if (is_base) {
+            printf("%.3f ", problem->tableau[row].back());
+            row++;
+        } else {
+            printf("0.000 ");
+        }
+    }
+    cout << endl;
+}
+
+void print_reduced_cost(Problem *problem) {
+    printf("C ");
+    for (int i = 0; i < problem->tableau[0].size() - 1; i++) {
+        double value = problem->tableau[0][i];
+
+        value < -EPSILON || value > EPSILON ? value = problem->tableau[0][i] * -1 : value = problem->tableau[0][i];
+
+        printf("%.3f ", value);
+    }
+
+    cout << endl;
+}
+
 int main(int argv, char** argc) {
     char* filename = argc[1];
-    int is_not_viable;
 
     Problem *problem = new Problem();
 
@@ -124,22 +187,19 @@ int main(int argv, char** argc) {
 
     create_tableau(problem);
 
-    is_not_viable = pivoteia(problem, 1, 0);
-    is_not_viable = pivoteia(problem, 2, 1);
-    is_not_viable = pivoteia(problem, 3, 2);
+    bool is_viable = checks_basis_viability(problem);
 
-    if (is_not_viable) {
-        cout << "Problema não viável" << endl;
+    printf("V %c\n", is_viable ? 'S' : 'N');
+
+    if (!is_viable) {
+        return 0;
     }
 
-    // print tableau
-    for (int i = 0; i < problem->tableau.size(); i++) {
-        for (int j = 0; j < problem->tableau[i].size(); j++) {
-            cout << problem->tableau[i][j] << " ";
-        }
-        cout << endl;
-    }
+    print_solution(problem);
 
+    print_reduced_cost(problem);
+
+    printf("Z %.3f\n", problem->tableau[0].back());
 
     delete problem;
 

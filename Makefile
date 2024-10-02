@@ -4,4 +4,4 @@ compile:
 	g++ main.cpp -o main
 
 run:
-	./main ./t1-ex/ex3.lp
+	./main ./t1-ex/ex1.lp
