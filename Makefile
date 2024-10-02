@@ -1,7 +1,7 @@
 all: compile run
 
 compile:
-	g++ main.cpp
+	g++ main.cpp -o main
 
 run:
-	./a.out ./t1-ex/ex1.lp
+	./main ./t1-ex/ex3.lp

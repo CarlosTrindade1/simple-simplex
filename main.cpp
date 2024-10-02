@@ -12,14 +12,14 @@ using namespace std;
 struct Problem {
     int n;
     int m;
-    vector<int> c;
-    vector<vector<int>> A;
-    vector<int> b;
-    vector<int> base;
-    vector<vector<int>> tableau;
+    vector<double> c;
+    vector<vector<double>> A;
+    vector<double> b;
+    vector<double> base;
+    vector<vector<double>> tableau;
 };
 
-void read_numbers(string line, vector<int> *numbers) {
+void read_numbers(string line, vector<double> *numbers) {
     istringstream iss(line);
     string part;
 
@@ -44,7 +44,7 @@ void read_file(char* filename, Problem *problem) {
         } else if (line[0] == 'F') {
             read_numbers(line, &problem->c);
         } else if (line[0] == 'R') {
-            vector<int> *row = new vector<int>();
+            vector<double> *row = new vector<double>();
             read_numbers(line, row);
             problem->A.push_back(*row);
         } else if (line[0] == 'B') {
@@ -88,14 +88,49 @@ void create_tableau(Problem *problem) {
     }
 }
 
+int pivoteia(Problem *problem, int row, int col) {
+    double pivot = problem->tableau[row][col];
+
+    if (pivot == 0) {
+        return 1;
+    }
+
+    for (int i = 0; i < problem->tableau[row].size(); i++) {
+        problem->tableau[row][i] /= pivot;
+    }
+
+    for (int i = 0; i < problem->tableau.size(); i++) {
+        if (i == row) {
+            continue;
+        }
+
+        double factor = problem->tableau[i][col] * -1;
+
+        for (int j = 0; j < problem->tableau[i].size(); j++) {
+            problem->tableau[i][j] += problem->tableau[row][j] * factor;
+        }
+    }
+
+    return 0;
+}
+
 int main(int argv, char** argc) {
     char* filename = argc[1];
+    int is_not_viable;
 
     Problem *problem = new Problem();
 
     create_problem(filename, problem);
 
     create_tableau(problem);
+
+    is_not_viable = pivoteia(problem, 1, 0);
+    is_not_viable = pivoteia(problem, 2, 1);
+    is_not_viable = pivoteia(problem, 3, 2);
+
+    if (is_not_viable) {
+        cout << "Problema não viável" << endl;
+    }
 
     // print tableau
     for (int i = 0; i < problem->tableau.size(); i++) {
