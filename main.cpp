@@ -1,14 +1,22 @@
 /*
     Autor: Carlos Eduardo da Silva Trindade
+    Professor: Vagner Pedrotti
+    Disciplina: Programação Linear
 */
 
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <sstream>
+#include <climits>
 #define EPSILON 0.00001
 
 using namespace std;
+
+struct io {
+    int index_to_leave;
+    vector<int> indexes_to_enter;
+};
 
 struct Problem {
     int n;
@@ -18,6 +26,7 @@ struct Problem {
     vector<double> b;
     vector<double> base;
     vector<vector<double>> tableau;
+    vector<io> solution_analysis;
 };
 
 void print_tableau(Problem *problem) {
@@ -178,6 +187,53 @@ void print_reduced_cost(Problem *problem) {
     cout << endl;
 }
 
+bool is_optimal_solution(Problem *problem) {
+    for (int i = 0; i < problem->tableau[0].size() - 1; i++) {
+        if (problem->tableau[0][i] > EPSILON) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void check_solution(Problem *problem) {
+    for (int i = 0; i < problem->tableau[0].size() - 1; i++) {
+        if (problem->tableau[0][i] > EPSILON) {
+            int smallest = INT_MAX;
+            int index = -1;
+            vector<int> rows;
+
+            for (int j = 1; j < problem->tableau.size(); j++) {
+                if (problem->tableau[j][i] > EPSILON) {
+                    double ratio = problem->tableau[j].back() / problem->tableau[j][i];
+
+                    if (smallest > ratio) {
+                        smallest = ratio;
+                        index = j;
+                    }
+                }
+            }
+
+            for (int j = 1; j < problem->tableau.size(); j++) {
+                if (problem->tableau[j][i] > EPSILON) {
+                    double ratio = problem->tableau[j].back() / problem->tableau[j][i];
+
+                    if (smallest == ratio) {
+                        rows.push_back(j);
+                    }
+                }
+            }
+
+            printf("L %d %zu ", i + 1, rows.size());
+            for (int j = 0; j < rows.size(); j++) {
+                printf("%.0f ", problem->base[rows[j] - 1]);
+            }
+            cout << endl;
+        }
+    }
+}
+
 int main(int argv, char** argc) {
     char* filename = argc[1];
 
@@ -200,6 +256,18 @@ int main(int argv, char** argc) {
     print_reduced_cost(problem);
 
     printf("Z %.3f\n", problem->tableau[0].back());
+
+    bool is_optimal = is_optimal_solution(problem);
+
+    is_optimal ? printf("O S\n") : printf("O N\n");
+
+    if (is_optimal) {
+        return 0;
+    }
+
+    print_tableau(problem);
+
+    check_solution(problem);
 
     delete problem;
 
