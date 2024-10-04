@@ -15,6 +15,7 @@ using namespace std;
 
 struct io {
     int index_to_leave;
+    double reduced_cost;
     vector<int> indexes_to_enter;
 };
 
@@ -230,7 +231,7 @@ bool check_solution(Problem *problem) {
                 rows_to_enter.push_back(problem->base[rows[j] - 1]);
             }
 
-            problem->solution_analysis.push_back({index, rows_to_enter});
+            problem->solution_analysis.push_back({index, problem->tableau[0][i], rows_to_enter});
         }
     }
 
@@ -241,6 +242,18 @@ bool check_solution(Problem *problem) {
     }
 
     return false;
+}
+
+void print_solution_analysis(Problem *problem) {
+    for (int i = 0; i < problem->solution_analysis.size(); i++) {
+        printf("L %d %zu ", problem->solution_analysis[i].index_to_leave, problem->solution_analysis[i].indexes_to_enter.size());
+
+        for (int j = 0; j < problem->solution_analysis[i].indexes_to_enter.size(); j++) {
+            printf("%d ", problem->solution_analysis[i].indexes_to_enter[j]);
+        }
+
+        cout << endl;
+    }
 }
 
 int main(int argv, char** argc) {
@@ -274,20 +287,14 @@ int main(int argv, char** argc) {
         return 0;
     }
 
-    // print_tableau(problem);
+    print_tableau(problem);
 
     bool is_limited = check_solution(problem);
 
     if (is_limited) {
-        for (int i = 0; i < problem->solution_analysis.size(); i++) {
-            printf("L %d %zu ", problem->solution_analysis[i].index_to_leave, problem->solution_analysis[i].indexes_to_enter.size());
+        print_solution_analysis(problem);
 
-            for (int j = 0; j < problem->solution_analysis[i].indexes_to_enter.size(); j++) {
-                printf("%d ", problem->solution_analysis[i].indexes_to_enter[j]);
-            }
-
-            cout << endl;
-        } 
+        
     } else {
         printf("Unlimited problem!\n");
     }
