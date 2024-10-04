@@ -197,12 +197,13 @@ bool is_optimal_solution(Problem *problem) {
     return true;
 }
 
-void check_solution(Problem *problem) {
+bool check_solution(Problem *problem) {
     for (int i = 0; i < problem->tableau[0].size() - 1; i++) {
         if (problem->tableau[0][i] > EPSILON) {
             int smallest = INT_MAX;
             int index = -1;
             vector<int> rows;
+            vector<int> rows_to_enter;
 
             for (int j = 1; j < problem->tableau.size(); j++) {
                 if (problem->tableau[j][i] > EPSILON) {
@@ -225,13 +226,21 @@ void check_solution(Problem *problem) {
                 }
             }
 
-            printf("L %d %zu ", i + 1, rows.size());
             for (int j = 0; j < rows.size(); j++) {
-                printf("%.0f ", problem->base[rows[j] - 1]);
+                rows_to_enter.push_back(problem->base[rows[j] - 1]);
             }
-            cout << endl;
+
+            problem->solution_analysis.push_back({index, rows_to_enter});
         }
     }
+
+    for (int i = 0; i < problem->solution_analysis.size(); i++) {
+        if (problem->solution_analysis[i].indexes_to_enter.size() > 0) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 int main(int argv, char** argc) {
@@ -265,9 +274,23 @@ int main(int argv, char** argc) {
         return 0;
     }
 
-    print_tableau(problem);
+    // print_tableau(problem);
 
-    check_solution(problem);
+    bool is_limited = check_solution(problem);
+
+    if (is_limited) {
+        for (int i = 0; i < problem->solution_analysis.size(); i++) {
+            printf("L %d %zu ", problem->solution_analysis[i].index_to_leave, problem->solution_analysis[i].indexes_to_enter.size());
+
+            for (int j = 0; j < problem->solution_analysis[i].indexes_to_enter.size(); j++) {
+                printf("%d ", problem->solution_analysis[i].indexes_to_enter[j]);
+            }
+
+            cout << endl;
+        } 
+    } else {
+        printf("Unlimited problem!\n");
+    }
 
     delete problem;
 
