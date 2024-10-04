@@ -15,7 +15,7 @@
 using namespace std;
 
 struct io {
-    int index_to_leave;
+    int index_to_enter;
     double reduced_cost;
     vector<int> indexes_to_enter;
 };
@@ -30,15 +30,6 @@ struct Problem {
     vector<vector<double>> tableau;
     vector<io> solution_analysis;
 };
-
-void print_tableau(Problem *problem) {
-    for (int i = 0; i < problem->tableau.size(); i++) {
-        for (int j = 0; j < problem->tableau[i].size(); j++) {
-            printf("%.5f ", problem->tableau[i][j]);
-        }
-        cout << endl;
-    }
-}
 
 void read_numbers(string line, vector<double> *numbers) {
     istringstream iss(line);
@@ -203,7 +194,6 @@ bool check_solution(Problem *problem) {
     for (int i = 0; i < problem->tableau[0].size() - 1; i++) {
         if (problem->tableau[0][i] > EPSILON) {
             int smallest = INT_MAX;
-            int index = -1;
             vector<int> rows;
             vector<int> rows_to_enter;
 
@@ -213,7 +203,6 @@ bool check_solution(Problem *problem) {
 
                     if (smallest > ratio) {
                         smallest = ratio;
-                        index = j;
                     }
                 }
             }
@@ -232,7 +221,7 @@ bool check_solution(Problem *problem) {
                 rows_to_enter.push_back(problem->base[rows[j] - 1]);
             }
 
-            problem->solution_analysis.push_back({index, problem->tableau[0][i], rows_to_enter});
+            problem->solution_analysis.push_back({i + 1, problem->tableau[0][i], rows_to_enter});
         }
     }
 
@@ -247,7 +236,7 @@ bool check_solution(Problem *problem) {
 
 void print_solution_analysis(Problem *problem) {
     for (int i = 0; i < problem->solution_analysis.size(); i++) {
-        printf("L %d %zu ", problem->solution_analysis[i].index_to_leave, problem->solution_analysis[i].indexes_to_enter.size());
+        printf("L %d %zu ", problem->solution_analysis[i].index_to_enter, problem->solution_analysis[i].indexes_to_enter.size());
 
         for (int j = 0; j < problem->solution_analysis[i].indexes_to_enter.size(); j++) {
             printf("%d ", problem->solution_analysis[i].indexes_to_enter[j]);
@@ -255,6 +244,14 @@ void print_solution_analysis(Problem *problem) {
 
         cout << endl;
     }
+}
+
+int search_on_base(Problem *problem, int value) {
+    for (int i = 0; i < problem->base.size(); i++)
+        if (problem->base[i] == value)
+            return i;
+
+    return -1;
 }
 
 int main(int argv, char** argc) {
@@ -299,7 +296,7 @@ int main(int argv, char** argc) {
         for (int i = 0; i < problem->solution_analysis.size(); i++) {
             if (problem->solution_analysis[i].reduced_cost > greater) {
                 greater = problem->solution_analysis[i].reduced_cost;
-                index_to_enter = problem->solution_analysis[i].index_to_leave;
+                index_to_enter = problem->solution_analysis[i].index_to_enter;
             }
         }
 
@@ -323,16 +320,30 @@ int main(int argv, char** argc) {
 
         printf("Z %.3f\n", problem->tableau[0].back());
     } else {
-        // print tableau->solution_analysis
+        int index_to_enter;
+        int greater = INT_MIN;
+
         for (int i = 0; i < problem->solution_analysis.size(); i++) {
-            printf("L %d %zu ", problem->solution_analysis[i].index_to_leave, problem->solution_analysis[i].indexes_to_enter.size());
-
-            for (int j = 0; j < problem->solution_analysis[i].indexes_to_enter.size(); j++) {
-                printf("%d ", problem->solution_analysis[i].indexes_to_enter[j]);
+            if (problem->solution_analysis[i].reduced_cost > greater) {
+                greater = problem->solution_analysis[i].reduced_cost;
+                index_to_enter = problem->solution_analysis[i].index_to_enter;
             }
-
-            cout << endl;
         }
+
+        printf("I %d ", index_to_enter);
+
+        for (int i = 0; i < problem->n; i++) {
+            int index_base = search_on_base(problem, i + 1);
+
+            if (index_base == -1 && i != index_to_enter - 1) {
+                printf("0.000 ");
+            } else if (i == index_to_enter) {
+                printf("1.000 ");
+            } else {
+                printf("%.3f ", problem->tableau[index_base + 1][index_to_enter - 1] * -1);
+            }
+        }
+        cout << endl;
     }
 
     delete problem;
