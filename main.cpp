@@ -9,6 +9,7 @@
 #include <vector>
 #include <sstream>
 #include <climits>
+#include <algorithm>
 #define EPSILON 0.00001
 
 using namespace std;
@@ -287,16 +288,51 @@ int main(int argv, char** argc) {
         return 0;
     }
 
-    print_tableau(problem);
-
     bool is_limited = check_solution(problem);
 
     if (is_limited) {
         print_solution_analysis(problem);
 
-        
+        int index_to_enter;
+        int greater = INT_MIN;
+
+        for (int i = 0; i < problem->solution_analysis.size(); i++) {
+            if (problem->solution_analysis[i].reduced_cost > greater) {
+                greater = problem->solution_analysis[i].reduced_cost;
+                index_to_enter = problem->solution_analysis[i].index_to_leave;
+            }
+        }
+
+        int index_to_leave = problem->solution_analysis[index_to_enter - 1].indexes_to_enter[0];
+
+        printf("T %d %d\n", index_to_enter, index_to_leave);
+
+        auto it = remove(problem->base.begin(), problem->base.end(), index_to_leave);
+
+        problem->base.erase(it, problem->base.end());
+
+        auto ie = lower_bound(problem->base.begin(), problem->base.end(), index_to_enter);
+
+        problem->base.insert(ie, index_to_enter);
+
+        is_viable = checks_basis_viability(problem);
+
+        print_solution(problem);
+
+        print_reduced_cost(problem);
+
+        printf("Z %.3f\n", problem->tableau[0].back());
     } else {
-        printf("Unlimited problem!\n");
+        // print tableau->solution_analysis
+        for (int i = 0; i < problem->solution_analysis.size(); i++) {
+            printf("L %d %zu ", problem->solution_analysis[i].index_to_leave, problem->solution_analysis[i].indexes_to_enter.size());
+
+            for (int j = 0; j < problem->solution_analysis[i].indexes_to_enter.size(); j++) {
+                printf("%d ", problem->solution_analysis[i].indexes_to_enter[j]);
+            }
+
+            cout << endl;
+        }
     }
 
     delete problem;
